@@ -13,7 +13,6 @@ class Search {
 	private $sConn;
 	private $rangeStr = "";
 	private $rangeStrArr=array();
-	private $dConn;
 	private $defaultFacetData = array();
 	private $whereFacetStr = "";
 	private $sql;
@@ -73,7 +72,6 @@ class Search {
 
 				unset($rangeArr[0]);
 				$rangeStr = implode(",", $rangeArr);
-				// var_dump($rangeStr); die;
 				$this -> rangeStr = "INTERVAL($fk," . $rangeStr . ") as ".$fk."_seg";
 				$this -> rangeStrArr[$fk]=	$this -> rangeStr;
 				$tempPrice=array();
@@ -102,7 +100,6 @@ class Search {
 				if (isset($whereTemp[$wk])) {
 					$order=(isset($filterArr[$wk]["order"])) ? $filterArr[$wk]["order"] : "ASC";
 					$key=(isset($this->rangeStrArr[$wk])) ? $this->rangeStrArr[$wk] : $wk;
-					// $whereFacet[$wk] = "FACET " . $key . " ORDER BY FACET() ".$order.$this->maxFacetLimit;
 					$whereFacet[$wk] = "FACET " . $key . " ORDER BY count(*) ".$order.$this->maxFacetLimit;
 				}
 
@@ -110,7 +107,6 @@ class Search {
 		}
 
 		$this -> whereArr = $whereArr;
-		// var_dump($this -> whereArr); die;
 		$countWhereArr = count($whereArr);
 		$absWhereArr = array();
 		foreach ($whereArr as $wk => $wv) {
@@ -135,22 +131,13 @@ class Search {
 		$q = (isset($query)) ? $query : "";
 		$mainSelectStr = (count($this -> selectArr) > 0) ? $this -> selectStr . "," : "";
 		$sql = "SELECT $mainSelectStr * FROM $this->index WHERE MATCH('".$q."') $this->whereStr $this->orderBy $this->limit $this->whereFacetStr;";
-		// var_dump($sql); die;
-		// $sql = "SELECT $mainSelectStr * FROM $this->index WHERE MATCH('') $this->whereStr $this->orderBy $this->limit $this->whereFacetStr;";
-
-		// $sql = "SELECT $mainSelectStr * FROM $this->index WHERE MATCH('') $this->whereStr $this->orderBy $this->limit $this->whereFacetStr;";
-		// echo $sql; die;
-
-
 		$this -> sql = $sql;
-		// echo $sql; die;
 	}
 
 	private function executeSql($query = "") {
 		$q = (isset($query)) ? $query : "";
 		$data = array();
 		$stmt = $this -> sConn -> prepare($this -> sql);
-		// $stmt -> bindValue(':match', $q, PDO::PARAM_STR);
 		$stmt -> execute();
 		$this->formatData($stmt);
 	}
@@ -178,7 +165,7 @@ class Search {
 
 	private function loadDependency() {
 		$realPath = realpath('.') . "/";
-		require_once ($realPath . "config/config.php");
+		require_once ($realPath . "config.php");
 		$this -> setConnection();
 	}
 
@@ -189,7 +176,6 @@ class Search {
 	private function setConnection() {
 		try {
 			$this -> sConn = new PDO(SPHINX_CON);
-			$this -> dConn = new PDO(DB_DSN, DB_USERNAME, DB_PASSWORD);
 			$this -> index = SPHINX_INDEX;
 		} catch (PDOException $e) {
 			$this->isExeceptionFound=true;
